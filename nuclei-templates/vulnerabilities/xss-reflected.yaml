@@ -1,0 +1,65 @@
+id: xss-reflected-detection
+
+info:
+  name: Reflected XSS Detection
+  author: alpha-suite
+  severity: medium
+  description: |
+    Detects potential reflected Cross-Site Scripting (XSS) vulnerabilities
+    where user input is reflected in the response without proper sanitization.
+  reference:
+    - https://owasp.org/www-community/attacks/xss/
+    - https://portswigger.net/web-security/cross-site-scripting/reflected
+  classification:
+    cwe-id: CWE-79
+  tags: xss,injection,owasp,reflected
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/?q=<script>alert(1)</script>"
+      - "{{BaseURL}}/?search=<img src=x onerror=alert(1)>"
+      - "{{BaseURL}}/?name=<svg/onload=alert(1)>"
+      - "{{BaseURL}}/?id=\"><script>alert(1)</script>"
+      - "{{BaseURL}}/?page=javascript:alert(1)"
+      - "{{BaseURL}}/?redirect=javascript:alert(1)"
+      - "{{BaseURL}}/?url=<script>alert(1)</script>"
+      - "{{BaseURL}}/?callback=<script>alert(1)</script>"
+
+    stop-at-first-match: true
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "<script>alert(1)</script>"
+          - "<img src=x onerror=alert(1)>"
+          - "<svg/onload=alert(1)>"
+          - "javascript:alert(1)"
+        condition: or
+
+      - type: word
+        part: header
+        words:
+          - "text/html"
+
+      - type: status
+        status:
+          - 200
+
+  - method: GET
+    path:
+      - "{{BaseURL}}/?q={{randstr}}<test>"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - "{{randstr}}<test>"
+
+      - type: word
+        part: header
+        negative: true
+        words:
+          - "Content-Security-Policy"

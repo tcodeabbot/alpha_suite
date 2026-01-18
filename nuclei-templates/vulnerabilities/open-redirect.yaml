@@ -1,0 +1,53 @@
+id: open-redirect-detection
+
+info:
+  name: Open Redirect Detection
+  author: alpha-suite
+  severity: medium
+  description: |
+    Detects open redirect vulnerabilities that could be used for phishing
+    attacks by redirecting users to malicious websites.
+  reference:
+    - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/04-Testing_for_Client-side_URL_Redirect
+    - https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html
+  classification:
+    cwe-id: CWE-601
+  tags: redirect,owasp,misconfig
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/redirect?url=https://evil.com"
+      - "{{BaseURL}}/redirect?to=https://evil.com"
+      - "{{BaseURL}}/redirect?dest=https://evil.com"
+      - "{{BaseURL}}/redirect?destination=https://evil.com"
+      - "{{BaseURL}}/redirect?redir=https://evil.com"
+      - "{{BaseURL}}/redirect?redirect_uri=https://evil.com"
+      - "{{BaseURL}}/redirect?redirect_url=https://evil.com"
+      - "{{BaseURL}}/redirect?return=https://evil.com"
+      - "{{BaseURL}}/redirect?return_to=https://evil.com"
+      - "{{BaseURL}}/redirect?returnTo=https://evil.com"
+      - "{{BaseURL}}/redirect?next=https://evil.com"
+      - "{{BaseURL}}/redirect?goto=https://evil.com"
+      - "{{BaseURL}}/out?url=https://evil.com"
+      - "{{BaseURL}}/login?next=https://evil.com"
+      - "{{BaseURL}}/logout?redirect=https://evil.com"
+      - "{{BaseURL}}/?url=//evil.com"
+      - "{{BaseURL}}/?redirect=//evil.com"
+      - "{{BaseURL}}/?next=/\\evil.com"
+
+    host-redirects: true
+    max-redirects: 2
+    stop-at-first-match: true
+
+    matchers-condition: or
+    matchers:
+      - type: regex
+        part: header
+        regex:
+          - '(?i)Location:\s*https?://evil\.com'
+          - '(?i)Location:\s*//evil\.com'
+
+      - type: dsl
+        dsl:
+          - 'contains(tolower(location), "evil.com")'

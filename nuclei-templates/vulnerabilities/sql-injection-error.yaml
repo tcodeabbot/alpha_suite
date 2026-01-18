@@ -1,0 +1,82 @@
+id: sql-injection-error-based
+
+info:
+  name: SQL Injection - Error Based Detection
+  author: alpha-suite
+  severity: high
+  description: |
+    Detects potential SQL injection vulnerabilities by analyzing error messages
+    returned by the application when SQL syntax is injected.
+  reference:
+    - https://owasp.org/www-community/attacks/SQL_Injection
+    - https://portswigger.net/web-security/sql-injection
+  classification:
+    cwe-id: CWE-89
+  tags: sqli,injection,owasp,database
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/?id=1'"
+      - "{{BaseURL}}/?id=1%27"
+      - "{{BaseURL}}/?id=1%22"
+      - "{{BaseURL}}/?id=1%00"
+      - "{{BaseURL}}/?id=1 AND 1=1"
+      - "{{BaseURL}}/?id=1 OR 1=1"
+      - "{{BaseURL}}/?page=1'"
+      - "{{BaseURL}}/?search=test'"
+      - "{{BaseURL}}/?q=test'"
+      - "{{BaseURL}}/?item=1'"
+
+    stop-at-first-match: true
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "SQL syntax"
+          - "mysql_fetch"
+          - "Warning: mysql"
+          - "MySqlException"
+          - "valid MySQL result"
+          - "MySqlClient"
+          - "com.mysql.jdbc"
+        condition: or
+
+      - type: word
+        words:
+          - "PostgreSQL"
+          - "pg_query"
+          - "pg_exec"
+          - "PG::SyntaxError"
+          - "PSQLException"
+        condition: or
+
+      - type: word
+        words:
+          - "ORA-"
+          - "Oracle error"
+          - "Oracle.*Driver"
+          - "OracleException"
+        condition: or
+
+      - type: word
+        words:
+          - "Microsoft SQL Server"
+          - "ODBC SQL Server"
+          - "SQLServer JDBC"
+          - "SqlException"
+          - "Unclosed quotation mark"
+        condition: or
+
+      - type: word
+        words:
+          - "SQLite3::"
+          - "SQLiteException"
+          - "SQLITE_ERROR"
+        condition: or
+
+      - type: regex
+        regex:
+          - 'You have an error in your SQL syntax'
+          - 'Syntax error.*in query expression'
+          - 'Unclosed quotation mark after the character string'

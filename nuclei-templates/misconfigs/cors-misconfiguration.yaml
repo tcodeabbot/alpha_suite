@@ -1,0 +1,65 @@
+id: cors-misconfiguration
+
+info:
+  name: CORS Misconfiguration Detection
+  author: alpha-suite
+  severity: medium
+  description: |
+    Detects Cross-Origin Resource Sharing (CORS) misconfigurations that could allow
+    unauthorized access to sensitive data from malicious websites.
+  reference:
+    - https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny
+    - https://portswigger.net/web-security/cors
+  classification:
+    cwe-id: CWE-942
+  tags: cors,misconfig,generic
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+
+    headers:
+      Origin: "https://evil.com"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: header
+        words:
+          - "Access-Control-Allow-Origin: https://evil.com"
+          - "Access-Control-Allow-Credentials: true"
+        condition: and
+
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+
+    headers:
+      Origin: "null"
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: header
+        words:
+          - "Access-Control-Allow-Origin: null"
+
+      - type: status
+        status:
+          - 200
+
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+
+    headers:
+      Origin: "https://{{Hostname}}.evil.com"
+
+    matchers-condition: and
+    matchers:
+      - type: dsl
+        dsl:
+          - 'contains(tolower(response), "access-control-allow-origin")'
+          - 'contains(tolower(response), "{{Hostname}}.evil.com")'
+        condition: and

@@ -1,0 +1,62 @@
+id: admin-panel-exposure
+
+info:
+  name: Admin Panel Exposure
+  author: alpha-suite
+  severity: info
+  description: |
+    Detects exposed administrative panels and login pages that could
+    be targeted for brute-force attacks or exploitation.
+  reference:
+    - https://owasp.org/www-project-web-security-testing-guide/
+  classification:
+    cwe-id: CWE-200
+  tags: exposure,admin,panel,login
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/admin"
+      - "{{BaseURL}}/admin/"
+      - "{{BaseURL}}/administrator"
+      - "{{BaseURL}}/admin/login"
+      - "{{BaseURL}}/admin.php"
+      - "{{BaseURL}}/wp-admin"
+      - "{{BaseURL}}/wp-login.php"
+      - "{{BaseURL}}/phpmyadmin"
+      - "{{BaseURL}}/cpanel"
+      - "{{BaseURL}}/webmail"
+      - "{{BaseURL}}/manager/html"
+      - "{{BaseURL}}/admin/dashboard"
+      - "{{BaseURL}}/backend"
+      - "{{BaseURL}}/panel"
+      - "{{BaseURL}}/controlpanel"
+      - "{{BaseURL}}/admincp"
+
+    stop-at-first-match: false
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+          - 301
+          - 302
+
+      - type: word
+        words:
+          - "admin"
+          - "login"
+          - "password"
+          - "username"
+          - "sign in"
+          - "log in"
+          - "dashboard"
+        condition: or
+        part: body
+        case-insensitive: true
+
+    extractors:
+      - type: regex
+        part: header
+        regex:
+          - 'Location: (.+)'

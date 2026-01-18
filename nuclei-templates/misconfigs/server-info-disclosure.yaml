@@ -1,0 +1,72 @@
+id: server-info-disclosure
+
+info:
+  name: Server Information Disclosure
+  author: alpha-suite
+  severity: info
+  description: |
+    Detects server information disclosure through headers, error pages,
+    and common endpoints that reveal technology stack details.
+  reference:
+    - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/02-Fingerprint_Web_Server
+  classification:
+    cwe-id: CWE-200
+  tags: tech-detect,misconfig,disclosure
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}"
+      - "{{BaseURL}}/server-status"
+      - "{{BaseURL}}/server-info"
+      - "{{BaseURL}}/phpinfo.php"
+      - "{{BaseURL}}/info.php"
+      - "{{BaseURL}}/test.php"
+      - "{{BaseURL}}/elmah.axd"
+      - "{{BaseURL}}/trace.axd"
+
+    matchers-condition: or
+    matchers:
+      - type: regex
+        part: header
+        regex:
+          - 'Server:\s*Apache[/\s][\d.]+'
+          - 'Server:\s*nginx[/\s][\d.]+'
+          - 'Server:\s*Microsoft-IIS[/\s][\d.]+'
+          - 'X-Powered-By:\s*PHP[/\s][\d.]+'
+          - 'X-Powered-By:\s*ASP\.NET'
+          - 'X-AspNet-Version:\s*[\d.]+'
+          - 'X-AspNetMvc-Version:\s*[\d.]+'
+
+      - type: word
+        part: body
+        words:
+          - "Apache Server Status"
+          - "Apache Server Information"
+          - "PHP Version"
+          - "phpinfo()"
+          - "PHP Credits"
+          - "Configuration File (php.ini) Path"
+        condition: or
+
+      - type: word
+        part: body
+        words:
+          - "ELMAH - Error Log"
+          - "ASP.NET Trace"
+          - "Application Trace"
+        condition: or
+
+    extractors:
+      - type: regex
+        part: header
+        regex:
+          - 'Server:\s*(.+)'
+          - 'X-Powered-By:\s*(.+)'
+          - 'X-AspNet-Version:\s*(.+)'
+
+      - type: regex
+        part: body
+        regex:
+          - 'PHP Version\s*([\d.]+)'
+          - 'Apache/([\d.]+)'

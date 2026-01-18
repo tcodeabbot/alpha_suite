@@ -1,0 +1,70 @@
+id: sensitive-file-exposure
+
+info:
+  name: Sensitive File Exposure
+  author: alpha-suite
+  severity: high
+  description: |
+    Detects exposed sensitive files that may contain credentials,
+    configuration details, or other sensitive information.
+  reference:
+    - https://owasp.org/www-project-web-security-testing-guide/
+  classification:
+    cwe-id: CWE-538
+  tags: exposure,config,backup,sensitive
+
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/.env"
+      - "{{BaseURL}}/.env.local"
+      - "{{BaseURL}}/.env.production"
+      - "{{BaseURL}}/.env.backup"
+      - "{{BaseURL}}/config.php.bak"
+      - "{{BaseURL}}/wp-config.php.bak"
+      - "{{BaseURL}}/web.config.bak"
+      - "{{BaseURL}}/.git/config"
+      - "{{BaseURL}}/.svn/entries"
+      - "{{BaseURL}}/.DS_Store"
+      - "{{BaseURL}}/backup.sql"
+      - "{{BaseURL}}/dump.sql"
+      - "{{BaseURL}}/database.sql"
+      - "{{BaseURL}}/.htpasswd"
+      - "{{BaseURL}}/id_rsa"
+      - "{{BaseURL}}/.ssh/id_rsa"
+
+    stop-at-first-match: false
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "DB_PASSWORD"
+          - "DB_USERNAME"
+          - "API_KEY"
+          - "SECRET_KEY"
+          - "AWS_ACCESS_KEY"
+          - "MYSQL_PASSWORD"
+        condition: or
+
+      - type: word
+        words:
+          - "[core]"
+          - "repositoryformatversion"
+        condition: and
+
+      - type: word
+        words:
+          - "BEGIN RSA PRIVATE KEY"
+          - "BEGIN OPENSSH PRIVATE KEY"
+        condition: or
+
+      - type: word
+        words:
+          - "INSERT INTO"
+          - "CREATE TABLE"
+        condition: or
+
+      - type: regex
+        regex:
+          - 'password\s*[:=]\s*["\'][^"\']+["\']'
+          - 'api[_-]?key\s*[:=]\s*["\'][^"\']+["\']'
